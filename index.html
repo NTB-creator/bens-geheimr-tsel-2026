@@ -77,8 +77,10 @@ h2{text-align:center;font-size:15px;letter-spacing:3px;color:var(--c);margin:0 0
 </div></div>
 
 <div class="letter">
-<b>Lieber Ben,</b><br>
-ich schenke dir einen Gaming-PC, den du dir ganz allein zusammenstellst. Prozessor, Grafikkarte, Gehäuse, Beleuchtung: Du bestimmst, was reinkommt.<br><br>Du darfst das Geld natürlich auch für etwas ganz anderes ausgeben. Ich weiß nur, dass du dir im Moment sehr einen Gaming-PC wünschst, und deshalb habe ich dabei an ihn gedacht.<br><br>Ich wünsche dir ganz viel Freude damit!<br><br>
+<b>Lieber Ben,</b><br><br>
+ich habe über die letzten Jahre etwas Geld für dich zurückgelegt. Ursprünglich wollte ich es dir einmal zur Konfirmation schenken. Da du aber vielleicht einen anderen Weg für dich wählst und ich weiß, wie sehr du dir schon länger einen eigenen Gaming-PC wünschst, habe ich mir gedacht: Warum nicht jetzt?<br><br>
+Deshalb bekommst du von mir einen Gutschein, damit du dir deinen Wunsch erfüllen kannst.<br><br>
+Ich wünsche dir ganz viel Freude mit deinem neuen PC und viele spannende Gaming-Stunden!<br><br>
 <span style="display:block;text-align:right">Dein Opa ❤️</span>
 </div>
 
@@ -109,7 +111,7 @@ ich schenke dir einen Gaming-PC, den du dir ganz allein zusammenstellst. Prozess
   P.forEach(function(o){o.y+=o.v;o.x+=Math.sin((o.y+o.w*40)/30);g.fillStyle=o.c;g.fillRect(o.x,o.y,o.r,o.r*1.6)});
   if(Date.now()-t0<5000)requestAnimationFrame(f);else g.clearRect(0,0,c.width,c.height);
  })();};
- var sc=document.getElementById("sc"),sx=sc.getContext("2d"),done=false,down=false;
+ var sc=document.getElementById("sc"),sx=sc.getContext("2d"),done=false,down=false,boomed=false,tk=false;
  function init(){
   var r=sc.parentNode.getBoundingClientRect(),d=window.devicePixelRatio||1;
   sc.width=r.width*d;sc.height=r.height*d;
@@ -122,13 +124,15 @@ ich schenke dir einen Gaming-PC, den du dir ganz allein zusammenstellst. Prozess
  function er(e){
   if(!down||done)return;
   var r=sc.getBoundingClientRect(),x=(e.clientX-r.left)*sc.width/r.width,y=(e.clientY-r.top)*sc.height/r.height;
-  sx.globalCompositeOperation="destination-out";sx.beginPath();sx.arc(x,y,sc.height*.1,0,7);sx.fill();
+  sx.globalCompositeOperation="destination-out";sx.beginPath();sx.arc(x,y,sc.height*.24,0,7);sx.fill();
+  if(!tk){tk=true;setTimeout(function(){tk=false;chk()},200)}
   e.preventDefault();
  }
  function chk(){
   var a=sx.getImageData(0,0,sc.width,sc.height).data,n=0,tot=0;
   for(var i=3;i<a.length;i+=64){tot++;if(a[i]<20)n++}
-  if(n/tot>.85&&!done){done=true;sc.style.opacity=0;sc.style.pointerEvents="none";document.getElementById("hint").textContent="🎉 Wow, 3.000 €! Dein Wunsch kann wahr werden!";window.boom()}
+  if(n/tot>.2&&!boomed){boomed=true;window.boom()}
+  if(n/tot>.5&&!done){done=true;sc.style.opacity=0;sc.style.pointerEvents="none";document.getElementById("hint").textContent="🎉 Wow, 3.000 €! Dein Wunsch kann wahr werden!"}
  }
  sc.addEventListener("pointerdown",function(e){down=true;sc.setPointerCapture(e.pointerId);er(e)});
  sc.addEventListener("pointermove",er);
