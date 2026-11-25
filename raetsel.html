@@ -38,6 +38,11 @@ ol li::before{content:counter(q);flex:none;width:30px;height:30px;border-radius:
 .panel input{display:block;margin:10px auto 0;font:bold 22px Orbitron,"Trebuchet MS",sans-serif;text-transform:uppercase;letter-spacing:4px;text-align:center;width:min(280px,100%);padding:10px;border:3px solid var(--line);border-radius:12px;background:transparent;color:var(--fg);outline:none}
 .panel input:focus{border-color:var(--c)}
 #msg,#lmsg{min-height:1.5em;margin-top:10px;font-size:17px}
+#lock{transition:border-color .2s,box-shadow .2s}
+#lock.err{border-color:#ef4444;box-shadow:0 0 30px rgba(239,68,68,.7);animation:sh .45s}
+#lock input.bad{border-color:#ef4444;color:#ef4444}
+#lmsg.bad{color:#ef4444;font-weight:bold}
+@keyframes sh{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
 #lock{display:none}
 #lock .q{margin:16px 0 0;line-height:1.4}
 #lock input{width:100px;letter-spacing:2px;font-size:20px}
@@ -100,11 +105,42 @@ t.addEventListener("input",function(e){
 document.getElementById("clues").innerHTML=W.map(function(w){return "<li>"+w[2]+"</li>"}).join("");
 var sol=document.getElementById("sol"),msg=document.getElementById("msg"),qr=document.getElementById("qr"),lock=document.getElementById("lock");
 var CODE=["130","82","20"];
-function checkLock(){
- var ok=true;
- lock.querySelectorAll("input").forEach(function(x,i){if(x.value.trim()!==CODE[i])ok=false});
+var ac=null;
+function buzz(){
+ try{
+  ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+  if(ac.resume)ac.resume();
+  var t=ac.currentTime;
+  [[220,0],[165,.22]].forEach(function(x){
+   var o=ac.createOscillator(),g=ac.createGain();
+   o.type="sawtooth";o.frequency.value=x[0];
+   g.gain.setValueAtTime(.0001,t+x[1]);g.gain.exponentialRampToValueAtTime(.25,t+x[1]+.02);g.gain.exponentialRampToValueAtTime(.0001,t+x[1]+.2);
+   o.connect(g);g.connect(ac.destination);o.start(t+x[1]);o.stop(t+x[1]+.21);
+  });
+ }catch(e){}
+ try{if(navigator.vibrate)navigator.vibrate([120,60,120])}catch(e){}
+}
+function fail(){
+ var lm=document.getElementById("lmsg");
+ lm.textContent="❌ Das stimmt leider nicht. Probier es nochmal!";lm.className="bad";
+ lock.classList.remove("err");void lock.offsetWidth;lock.classList.add("err");
+ buzz();
+ setTimeout(function(){lock.classList.remove("err")},700);
+}
+function checkLock(e){
+ var ok=true,lm=document.getElementById("lmsg");
+ lock.querySelectorAll("input").forEach(function(x,i){
+  var v=x.value.trim(),full=v.length>=CODE[i].length;
+  if(v!==CODE[i])ok=false;
+  x.classList.toggle("bad",full&&v!==CODE[i]);
+ });
  qr.style.display=ok?"block":"none";
- document.getElementById("lmsg").textContent=ok?"🔓 Das Schloss ist offen!":"";
+ if(ok){lm.textContent="🔓 Das Schloss ist offen!";lm.className=""}
+ else if(e&&e.target&&e.target.tagName==="INPUT"){
+  var i=Array.prototype.indexOf.call(lock.querySelectorAll("input"),e.target),v=e.target.value.trim();
+  if(v.length>=CODE[i].length&&v!==CODE[i])fail();
+  else if(!lock.querySelector("input.bad")){lm.textContent="";lm.className=""}
+ }
 }
 lock.addEventListener("input",checkLock);
 sol.addEventListener("input",function(){
