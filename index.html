@@ -191,13 +191,33 @@ Ich wünsche dir ganz viel Freude mit deinem neuen PC und viele spannende Gaming
  function sfx(){
   try{
    var A=window.AudioContext||window.webkitAudioContext,ac=new A();if(ac.resume)ac.resume();var t=ac.currentTime;
-   function tone(f,st,d,ty,v){var o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.setValueAtTime(f,st);g.gain.setValueAtTime(.0001,st);g.gain.exponentialRampToValueAtTime(v,st+.02);g.gain.exponentialRampToValueAtTime(.0001,st+d);o.connect(g);g.connect(ac.destination);o.start(st);o.stop(st+d+.02)}
-   var o=ac.createOscillator(),g=ac.createGain();o.type="sawtooth";o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(1400,t+.6);
-   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.15,t+.3);g.gain.exponentialRampToValueAtTime(.0001,t+.65);
-   o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.7);
-   [523,659,784,1047,1319].forEach(function(f,i){tone(f,t+.55+i*.1,.5,"triangle",.22)});
+   var M=ac.createGain();M.gain.value=.9;var cp=ac.createDynamicsCompressor();M.connect(cp);cp.connect(ac.destination);
+   function tone(f,st,d,ty,v,lp){
+    var o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.setValueAtTime(f,st);
+    g.gain.setValueAtTime(.0001,st);g.gain.exponentialRampToValueAtTime(v,st+.03);g.gain.setValueAtTime(v,st+d*.6);g.gain.exponentialRampToValueAtTime(.0001,st+d);
+    if(lp){var fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.setValueAtTime(lp,st);o.connect(fl);fl.connect(g)}else o.connect(g);
+    g.connect(M);o.start(st);o.stop(st+d+.05);
+   }
+   var len=Math.floor(ac.sampleRate*.9),buf=ac.createBuffer(1,len,ac.sampleRate),dd=buf.getChannelData(0);
+   for(var i=0;i<len;i++)dd[i]=Math.random()*2-1;
+   var ns=ac.createBufferSource();ns.buffer=buf;
+   var bp=ac.createBiquadFilter();bp.type="bandpass";bp.Q.value=1.2;bp.frequency.setValueAtTime(300,t);bp.frequency.exponentialRampToValueAtTime(5000,t+.7);
+   var ng=ac.createGain();ng.gain.setValueAtTime(.0001,t);ng.gain.exponentialRampToValueAtTime(.5,t+.55);ng.gain.exponentialRampToValueAtTime(.0001,t+.85);
+   ns.connect(bp);bp.connect(ng);ng.connect(M);ns.start(t);
+   var o=ac.createOscillator(),g=ac.createGain();o.type="sawtooth";o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(880,t+.65);
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.4);g.gain.exponentialRampToValueAtTime(.0001,t+.7);
+   o.connect(g);g.connect(M);o.start(t);o.stop(t+.75);
+   var k=ac.createOscillator(),kg=ac.createGain();k.type="sine";k.frequency.setValueAtTime(140,t+.65);k.frequency.exponentialRampToValueAtTime(45,t+1);
+   kg.gain.setValueAtTime(.9,t+.65);kg.gain.exponentialRampToValueAtTime(.0001,t+1.1);k.connect(kg);kg.connect(M);k.start(t+.65);k.stop(t+1.15);
+   var s=t+.65;
+   [[392,0,.16],[523,.17,.16],[659,.34,.16]].forEach(function(n){tone(n[0],s+n[1],n[2]+.1,"sawtooth",.22,2200);tone(n[0]/2,s+n[1],n[2]+.1,"triangle",.2)});
+   var c=s+.55;
+   [523,659,784,1047].forEach(function(f){tone(f,c,1.6,"sawtooth",.2,2600);tone(f*2,c,1.2,"sine",.06)});
+   tone(131,c,1.6,"triangle",.35);tone(262,c,1.6,"sine",.2);
+   for(var j=0;j<16;j++){tone(2000+Math.random()*3000,c+.1+j*.1,.35,"sine",.06)}
+   [1047,1319,1568,2093,2637].forEach(function(f,i){tone(f,c+.3+i*.07,.5,"triangle",.12)});
   }catch(e){}
-  try{if(navigator.vibrate)navigator.vibrate([50,30,120])}catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([50,30,120,40,200])}catch(e){}
  }
  function open(){
   if(used)return;used=true;sfx();
