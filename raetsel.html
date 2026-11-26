@@ -78,6 +78,17 @@ td input:focus{box-shadow:0 0 0 2px var(--c)}
 #fl{position:fixed;inset:0;background:radial-gradient(circle,#fff 0,var(--b) 40%,transparent 72%);opacity:0;pointer-events:none;z-index:50}
 #fl.on{animation:fl .9s ease-out}
 @keyframes fl{0%{opacity:.95}100%{opacity:0}}
+
+.lw{display:none;text-align:center;margin-bottom:14px}
+.lh{font-size:12px;letter-spacing:2px;color:var(--ok);margin-bottom:10px}
+.lts{display:flex;gap:6px;justify-content:center}
+.lt{width:38px;height:46px;display:grid;place-items:center;font-weight:900;font-size:24px;border-radius:10px;color:#fff;background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 0 16px var(--kgl);opacity:0;animation:lpop .6s cubic-bezier(.2,1.6,.4,1) both}
+.ln{margin-top:12px;color:var(--mut);opacity:0;animation:fi 1s ease-out 3.5s both}
+body.done .cbar{display:none}
+body.done td.k{animation:kp 1.1s ease-in-out infinite}
+@keyframes lpop{0%{opacity:0;transform:scale(.2) translateY(-30px)}100%{opacity:1;transform:none}}
+@keyframes kp{50%{box-shadow:0 0 26px var(--kgl),0 0 8px var(--kgl)}}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -90,13 +101,14 @@ td input:focus{box-shadow:0 0 0 2px var(--c)}
 <p class="sub">Hey Ben! Löse die 7 Aufgaben. Die <b>leuchtenden Kästchen</b> ergeben das Lösungswort.</p>
 <div class="cbar"><button class="nb" id="pv" type="button">‹</button><div class="ctext" id="ct"></div><button class="nb" id="nx" type="button">›</button></div>
 <div class="grid"><table id="t"></table></div>
+<div class="lw" id="lw"></div>
 <div id="m1"></div>
 <button class="btn" id="to2" type="button">ZUM LÖSUNGSWORT ›</button>
 </section>
 
 <section class="scr" id="s2">
 <h1 class="f">LÖSUNGSWORT</h1>
-<p class="sub">Lies die leuchtenden Kästchen<br>von oben nach unten.</p>
+<p class="sub">Wie lautet das Lösungswort,<br>das du gerade gesehen hast?</p>
 <div class="panel"><div class="hd f">DEIN LÖSUNGSWORT</div>
 <input id="sol" autocomplete="off" autocapitalize="characters" maxlength="12">
 <div id="msg"></div></div>
@@ -240,6 +252,23 @@ function nextOpen(){
   if(!rows[i].classList.contains("ok")){focusRow(i);return}
  }
 }
+var shown=false;
+function showWord(){
+ if(shown)return;shown=true;
+ if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+ document.body.classList.add("done");
+ var lw=document.getElementById("lw");
+ lw.innerHTML="<div class='lh f'>🎉 ALLE GELÖST! DEIN LÖSUNGSWORT:</div><div class='lts'>"+LOESUNG.split("").map(function(c,i){return "<span class='lt f' style='animation-delay:"+(.5+i*.4)+"s'>"+c+"</span>"}).join("")+"</div><div class='ln'>Merk dir das Wort gut!</div>";
+ lw.style.display="block";
+ try{initAudio();var s=ac.currentTime+.5;LOESUNG.split("").forEach(function(c,i){tone(523*Math.pow(2,[0,2,4,5,7,9,11][i]/12),s+i*.4,.4,"triangle",.22)})}catch(e){}
+ document.getElementById("to2").textContent="WEITER ›";
+}
+function hideWord(){
+ if(!shown)return;shown=false;
+ document.body.classList.remove("done");
+ document.getElementById("lw").style.display="none";
+ document.getElementById("to2").textContent="ZUM LÖSUNGSWORT ›";
+}
 t.addEventListener("input",function(e){
  var x=e.target,tr=x.closest("tr"),w=W[tr.dataset.r][0];
  var typed=gv(x).toUpperCase(),had=((x._p||"").replace(/\u200b/g,""))!=="";
@@ -259,10 +288,13 @@ t.addEventListener("input",function(e){
  if(ok&&!was)ding();
  var all=t.querySelectorAll("tr.ok").length===W.length,b=document.getElementById("to2"),m=document.getElementById("m1");
  b.classList.toggle("pulse",all);
- m.textContent=all?"🎉 Alle gelöst! Weiter geht es …":"";
- if(all&&!auto){auto=true;setTimeout(function(){if(cur===1){document.activeElement&&document.activeElement.blur();go(2)}auto=false},1400)}
- else if(ok&&!was&&!all){
-  setTimeout(function(){if(cur===1&&(tr.contains(document.activeElement)||!t.contains(document.activeElement)))nextOpen()},800);
+ m.textContent="";
+ if(all){showWord()}
+ else{
+  hideWord();
+  if(ok&&!was){
+   setTimeout(function(){if(cur===1&&(tr.contains(document.activeElement)||!t.contains(document.activeElement)))nextOpen()},800);
+  }
  }
 });
 
