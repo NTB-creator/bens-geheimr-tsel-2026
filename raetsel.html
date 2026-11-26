@@ -135,7 +135,7 @@ W.forEach(function(w,i){
  for(var c=1;c<=COLS;c++){
   var j=c-w[1];
   if(j<0||j>=w[0].length){h+="<td class='e'></td>";continue}
-  h+="<td"+(c==K?" class='k'":"")+">"+(j==0?"<i>"+(i+1)+"</i>":"")+"<input maxlength='1' data-j='"+j+"' autocomplete='off' autocapitalize='characters'></td>";
+  h+="<td"+(c==K?" class='k'":"")+">"+(j==0?"<i>"+(i+1)+"</i>":"")+"<input maxlength='2' data-j='"+j+"' autocomplete='off' autocapitalize='characters'></td>";
  }
  h+="</tr>";
 });
@@ -212,26 +212,57 @@ function setClue(i){
 function focusRow(i){
  setClue(i);
  var ins=rows[i].querySelectorAll("input"),f=null;
- for(var k=0;k<ins.length;k++){if(!ins[k].value){f=ins[k];break}}
+ for(var k=0;k<ins.length;k++){if(!ins[k].value.replace(/\u200b/g,"")){f=ins[k];break}}
  (f||ins[0]).focus();
 }
 document.getElementById("pv").onclick=function(){focusRow((rowIdx+W.length-1)%W.length)};
 document.getElementById("nx").onclick=function(){focusRow((rowIdx+1)%W.length)};
-t.addEventListener("focusin",function(e){var tr=e.target.closest("tr");if(tr)setClue(+tr.dataset.r)});
+function gv(x){return x.value.replace(/\u200b/g,"")}
+function sibling(x,dir){
+ var td=x.closest("td");td=dir>0?td.nextElementSibling:td.previousElementSibling;
+ while(td&&!td.querySelector("input"))td=dir>0?td.nextElementSibling:td.previousElementSibling;
+ return td?td.querySelector("input"):null;
+}
+t.addEventListener("focusin",function(e){
+ var x=e.target;if(x.tagName!=="INPUT")return;
+ setClue(+x.closest("tr").dataset.r);
+ if(x.value==="")x.value="\u200b";
+ x._p=x.value;
+ setTimeout(function(){try{x.setSelectionRange(0,x.value.length)}catch(err){}},0);
+});
+t.addEventListener("focusout",function(e){var x=e.target;if(x.tagName==="INPUT"&&x.value==="\u200b")x.value=""});
 setClue(0);
 var auto=false;
+function nextOpen(){
+ for(var k=1;k<=W.length;k++){
+  var i=(rowIdx+k)%W.length;
+  if(!rows[i].classList.contains("ok")){focusRow(i);return}
+ }
+}
 t.addEventListener("input",function(e){
- var inp=e.target,tr=inp.closest("tr"),w=W[tr.dataset.r][0];
- inp.value=inp.value.toUpperCase();
- if(inp.value){var n=inp.closest("td").nextElementSibling;while(n&&!n.querySelector("input")&&n.nextElementSibling)n=n.nextElementSibling;if(n&&n.querySelector("input"))n.querySelector("input").focus()}
- var s="";tr.querySelectorAll("input").forEach(function(x){s+=x.value});
- var was=tr.classList.contains("ok");
- tr.classList.toggle("ok",s===w);
- if(s===w&&!was)ding();
+ var x=e.target,tr=x.closest("tr"),w=W[tr.dataset.r][0];
+ var typed=gv(x).toUpperCase(),had=((x._p||"").replace(/\u200b/g,""))!=="";
+ if(typed===""){
+  if(had){x.value="\u200b";x._p=x.value}
+  else{
+   var pv=sibling(x,-1);
+   if(pv){x.value="";pv.value="";pv.focus()}else{x.value="\u200b";x._p=x.value}
+  }
+ }else{
+  typed=typed.slice(-1);x.value=typed;x._p=typed;
+  var nx=sibling(x,1);if(nx)nx.focus();
+ }
+ var s="";tr.querySelectorAll("input").forEach(function(i){s+=gv(i).toUpperCase()});
+ var was=tr.classList.contains("ok"),ok=(s===w);
+ tr.classList.toggle("ok",ok);
+ if(ok&&!was)ding();
  var all=t.querySelectorAll("tr.ok").length===W.length,b=document.getElementById("to2"),m=document.getElementById("m1");
  b.classList.toggle("pulse",all);
  m.textContent=all?"🎉 Alle gelöst! Weiter geht es …":"";
  if(all&&!auto){auto=true;setTimeout(function(){if(cur===1){document.activeElement&&document.activeElement.blur();go(2)}auto=false},1400)}
+ else if(ok&&!was&&!all){
+  setTimeout(function(){if(cur===1&&(tr.contains(document.activeElement)||!t.contains(document.activeElement)))nextOpen()},800);
+ }
 });
 
 /* ---------- Bildschirm 2: Lösungswort ---------- */
