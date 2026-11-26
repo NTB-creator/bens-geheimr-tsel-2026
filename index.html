@@ -48,9 +48,30 @@ h2{text-align:center;font-size:15px;letter-spacing:3px;color:var(--c);margin:0 0
 .xp i{display:block;height:100%;width:8%;background:linear-gradient(90deg,var(--a),var(--b),var(--c));animation:xp 2s ease-out forwards}
 @keyframes xp{to{width:34%}}
 .sig{text-align:center;font-size:20px;margin-top:24px}
+
+body:not(.go){overflow:hidden;height:100vh}
+.rv{opacity:0;transform:translate(var(--x,0),50px) scale(.85);filter:blur(8px);transition:opacity .9s ease var(--d,0s),transform .9s cubic-bezier(.2,.9,.3,1.15) var(--d,0s),filter .9s ease var(--d,0s)}
+.pc.rv{transform:scale(.1) rotate(-200deg)}
+.ticket.rv{transform:perspective(800px) rotateX(80deg) scale(.7)}
+.go .rv,.go .pc.rv,.go .ticket.rv{opacity:1;transform:none;filter:none}
+#gate{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--a) 35%,var(--bg)),var(--bg) 70%);cursor:pointer;text-align:center;padding:20px}
+#gate .gift{font-size:96px;line-height:1;animation:gf 1.6s ease-in-out infinite;filter:drop-shadow(0 0 24px var(--a))}
+#gate .t1{font-size:clamp(20px,6vw,30px);font-weight:900;line-height:1.2;background:linear-gradient(90deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}
+#gate .t2{color:var(--mut);font-size:15px}
+#gate button{font:700 15px Orbitron,"Trebuchet MS",sans-serif;letter-spacing:3px;color:#fff;background:linear-gradient(90deg,var(--a),var(--c));border:none;border-radius:14px;padding:14px 28px;box-shadow:0 0 28px var(--a);animation:pl 1.4s ease-in-out infinite;cursor:pointer}
+#gate.out{animation:gout .8s ease-in forwards;pointer-events:none}
+@keyframes gf{0%,100%{transform:translateY(0) rotate(-6deg) scale(1)}50%{transform:translateY(-14px) rotate(6deg) scale(1.08)}}
+@keyframes pl{50%{transform:scale(1.07);box-shadow:0 0 44px var(--c)}}
+@keyframes gout{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(2.4);filter:blur(10px)}}
+
+.dg{display:inline-block;width:.82em;text-align:center}
+.dg:not(.land){filter:blur(1.2px)}
+.dg.land{animation:ld .55s cubic-bezier(.2,1.6,.4,1)}
+@keyframes ld{0%{transform:scale(1.9);color:#fff;text-shadow:0 0 34px #fff}100%{transform:scale(1)}}
 </style>
 </head>
 <body>
+<div id="gate"><div class="gift">🎁</div><div class="t1 f">ES GIBT ETWAS FÜR DICH, BEN!</div><div class="t2">Mach dich bereit …</div><button class="f" type="button">ÖFFNEN</button></div>
 <canvas id="cv"></canvas>
 <main>
 <div class="tag f">🏆 ACHIEVEMENT UNLOCKED 🏆</div>
@@ -69,7 +90,7 @@ h2{text-align:center;font-size:15px;letter-spacing:3px;color:var(--c);margin:0 0
 
 <div class="ticket"><div class="in">
 <div class="mut f" style="letter-spacing:3px;font-size:12px">GUTSCHEIN IM WERT VON</div>
-<div class="scratch"><div class="amount f" style="margin:0;padding:4px 18px">3.000 €</div><canvas id="sc"></canvas></div>
+<div class="scratch"><div class="amount f" style="margin:0;padding:4px 18px"><span class="dg" data-v="3">3</span>.<span class="dg" data-v="0">0</span><span class="dg" data-v="0">0</span><span class="dg" data-v="0">0</span> €</div><canvas id="sc"></canvas></div>
 <div class="mut" id="hint">✨ Rubbel mit dem Finger, um den Betrag freizulegen!</div>
 <div class="mut">für deinen ganz persönlichen Wunsch-Gaming-PC</div>
 <div class="perf"></div>
@@ -114,7 +135,7 @@ Ich wünsche dir ganz viel Freude mit deinem neuen PC und viele spannende Gaming
  var sc=document.getElementById("sc"),sx=sc.getContext("2d"),done=false,down=false,boomed=false,tk=false;
  function init(){
   var r=sc.parentNode.getBoundingClientRect(),d=window.devicePixelRatio||1;
-  sc.width=r.width*d;sc.height=r.height*d;
+  sc.width=sc.parentNode.offsetWidth*d;sc.height=sc.parentNode.offsetHeight*d;
   var gr=sx.createLinearGradient(0,0,sc.width,sc.height);
   gr.addColorStop(0,"#9ca3af");gr.addColorStop(.5,"#e5e7eb");gr.addColorStop(1,"#9ca3af");
   sx.globalCompositeOperation="source-over";sx.fillStyle=gr;sx.fillRect(0,0,sc.width,sc.height);
@@ -132,13 +153,58 @@ Ich wünsche dir ganz viel Freude mit deinem neuen PC und viele spannende Gaming
   var a=sx.getImageData(0,0,sc.width,sc.height).data,n=0,tot=0;
   for(var i=3;i<a.length;i+=64){tot++;if(a[i]<20)n++}
   if(n/tot>.2&&!boomed){boomed=true;window.boom()}
-  if(n/tot>.5&&!done){done=true;sc.style.opacity=0;sc.style.pointerEvents="none";document.getElementById("hint").textContent="🎉 Wow, 3.000 €! Dein Wunsch kann wahr werden!"}
+  if(n/tot>.5&&!done){done=true;sc.style.opacity=0;sc.style.pointerEvents="none";stopSpin()}
  }
- sc.addEventListener("pointerdown",function(e){down=true;sc.setPointerCapture(e.pointerId);er(e)});
+ sc.addEventListener("pointerdown",function(e){try{if(AC){ac=ac||new AC();if(ac.resume)ac.resume()}}catch(x){}down=true;sc.setPointerCapture(e.pointerId);er(e)});
  sc.addEventListener("pointermove",er);
  sc.addEventListener("pointerup",function(){down=false;chk()});
  sc.addEventListener("pointercancel",function(){down=false;chk()});
  init();window.addEventListener("load",function(){if(!done&&!down)init()});
+ var dg=Array.prototype.slice.call(document.querySelectorAll(".amount .dg")),AC=window.AudioContext||window.webkitAudioContext,ac=null;
+ dg.forEach(function(x){x.spin=true});
+ var sp=setInterval(function(){dg.forEach(function(x){if(x.spin)x.textContent=Math.floor(Math.random()*10)})},70);
+ function tick(f){
+  if(!ac)return;
+  try{var t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type="triangle";o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.25,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+.25);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.27)}catch(e){}
+ }
+ function stopSpin(){
+  for(var k=dg.length-1,n=0;k>=0;k--,n++)(function(x,n){
+   setTimeout(function(){
+    x.spin=false;x.textContent=x.getAttribute("data-v");x.classList.add("land");tick(440+n*110);
+    if(n===dg.length-1){
+     clearInterval(sp);
+     document.getElementById("hint").textContent="🎉 Wow, 3.000 €! Dein Wunsch kann wahr werden!";
+     [523,659,784,1047].forEach(function(f,i){setTimeout(function(){tick(f)},i*90)});
+    }
+   },700+n*650);
+  })(dg[k],n);
+ }
+})();
+</script>
+<script>
+(function(){
+ var gate=document.getElementById("gate"),main=document.querySelector("main"),used=false;
+ Array.prototype.forEach.call(main.children,function(el,i){
+  if(el.classList.contains("tag"))return;
+  el.classList.add("rv");el.style.setProperty("--d",(.5+i*.17)+"s");el.style.setProperty("--x",(i%2?"-45px":"45px"));
+ });
+ function sfx(){
+  try{
+   var A=window.AudioContext||window.webkitAudioContext,ac=new A();if(ac.resume)ac.resume();var t=ac.currentTime;
+   function tone(f,st,d,ty,v){var o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.setValueAtTime(f,st);g.gain.setValueAtTime(.0001,st);g.gain.exponentialRampToValueAtTime(v,st+.02);g.gain.exponentialRampToValueAtTime(.0001,st+d);o.connect(g);g.connect(ac.destination);o.start(st);o.stop(st+d+.02)}
+   var o=ac.createOscillator(),g=ac.createGain();o.type="sawtooth";o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(1400,t+.6);
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.15,t+.3);g.gain.exponentialRampToValueAtTime(.0001,t+.65);
+   o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.7);
+   [523,659,784,1047,1319].forEach(function(f,i){tone(f,t+.55+i*.1,.5,"triangle",.22)});
+  }catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([50,30,120])}catch(e){}
+ }
+ function open(){
+  if(used)return;used=true;sfx();
+  gate.classList.add("out");document.body.classList.add("go");window.scrollTo(0,0);
+  setTimeout(function(){gate.parentNode.removeChild(gate)},900);
+ }
+ gate.addEventListener("click",open);
 })();
 </script>
 </body>
